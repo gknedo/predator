@@ -16,8 +16,10 @@
     "webpack-dev-server": "^4.4.0"
   },
   "dependencies": {
+    "hex-rgb": "^5.0.0",
     "lodash": "^4.17.21",
     "matter-js": "^0.18.0",
-    "randomcolor": "^0.6.2"
+    "randomcolor": "^0.6.2",
+    "rgb-hex": "^4.0.0"
   }
 }
