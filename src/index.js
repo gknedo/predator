@@ -4,16 +4,17 @@ import { randomColor} from 'randomcolor';
 import hexRgb from 'hex-rgb';
 import rgbHex from 'rgb-hex';
 
-const HERBIVORE_COLOR = randomColor();
+const HERBIVORE_COLOR = '#ffffff';
 const WORLD_SIZE = {x: 600, y: 600};
 const STEP_SIZE = 1/100;
 const HERBIVORE_SIZE = 10;
 const HERBIVORE_VARIANCE = 30;
-const HUNGRY_THRESHOLD = 0.75;
-const DEATH_THRESHOLD = 9;
+const HUNGRY_THRESHOLD = 0.5;
+const DEATH_THRESHOLD = 5;
 const INITIAL_POPULATION = 60;
 const INITIAL_FOOD = 3;
-const FOOD_AMOUNT = 5;
+const FOOD_AMOUNT = 30;
+let availableColors = ['#dd1111', '#11dd11', '#1111dd'];
 
 Math.randomArbitrary = function(min, max) {
   return Math.random() * (max - min) + min;
@@ -92,8 +93,8 @@ const createHerbivore = ({color, position} = {}) => {
 
 const mutateHerbivore = (herbivore) => {
   const positionDelta = {
-    x:  Math.randomArbitrary(-HERBIVORE_SIZE,HERBIVORE_SIZE),
-    y:  Math.randomArbitrary(-HERBIVORE_SIZE,HERBIVORE_SIZE),
+    x:  Math.randomArbitrary(-HERBIVORE_SIZE*5,HERBIVORE_SIZE*5),
+    y:  Math.randomArbitrary(-HERBIVORE_SIZE*5,HERBIVORE_SIZE*5),
   }
   const position = Vector.add(herbivore.body.position, positionDelta);
   position.x = clamp(position.x, HERBIVORE_SIZE, WORLD_SIZE.x - HERBIVORE_SIZE);
@@ -145,7 +146,7 @@ const findNearestFood = (herbivore, foods) => {
 
   foods.forEach((food) => {
     const worldDistance = getDistance(herbivorePosition, Object.values(food.body.position));
-    const colorDistance = getDistance(herbivoreColor, hexRgb(food.body.render.fillStyle, {format: 'array'}));
+    const colorDistance = Math.sqrt(getDistance(herbivoreColor, hexRgb(food.body.render.fillStyle, {format: 'array'})));
     const foodDistance = worldDistance * colorDistance;
     if(foodDistance < nearestFoodDistance) {
       nearestFood = food;
@@ -159,13 +160,13 @@ const findNearestFood = (herbivore, foods) => {
 
 const createFood = ({color, position} = {}) => {
   const initialPosition = position ?? randomPosition(WORLD_SIZE, HERBIVORE_SIZE);
-  const initialColor = color ?? randomColor();
+  const initialColor = color ?? availableColors.pop();
 
   const body = Bodies.polygon(
     initialPosition.x,
     initialPosition.y,
     3,
-    HERBIVORE_SIZE / 2,
+    HERBIVORE_SIZE*3,
     {
       isStatic: true,
       render: {
@@ -186,8 +187,8 @@ const createFood = ({color, position} = {}) => {
 
 const mutateFood = (food) => {
   const positionDelta = {
-    x:  Math.randomArbitrary(-100,100),
-    y:  Math.randomArbitrary(-100,100),
+    x:  Math.randomArbitrary(-120,120),
+    y:  Math.randomArbitrary(-120,120),
   }
   const position = Vector.add(food.body.position, positionDelta);
   position.x = clamp(position.x, HERBIVORE_SIZE, WORLD_SIZE.x - HERBIVORE_SIZE);
@@ -195,9 +196,9 @@ const mutateFood = (food) => {
 
   const color = hexRgb(food.color, {format: 'array'});
   const c = [
-    Math.round(clamp(color[0] + Math.randomArbitrary(-HERBIVORE_VARIANCE, HERBIVORE_VARIANCE), 0, 255)),
-    Math.round(clamp(color[1] + Math.randomArbitrary(-HERBIVORE_VARIANCE, HERBIVORE_VARIANCE), 0, 255)),
-    Math.round(clamp(color[2] + Math.randomArbitrary(-HERBIVORE_VARIANCE, HERBIVORE_VARIANCE), 0, 255)),
+    Math.round(clamp(color[0] + Math.randomArbitrary(-0, 0), 0, 255)),
+    Math.round(clamp(color[1] + Math.randomArbitrary(-0, 0), 0, 255)),
+    Math.round(clamp(color[2] + Math.randomArbitrary(-0, 0), 0, 255)),
   ];
   console.log(c);
   const initialColor = `#${rgbHex(c[0], c[1], c[2])}`;
@@ -208,7 +209,7 @@ const mutateFood = (food) => {
     position.x,
     position.y,
     3,
-    HERBIVORE_SIZE / 2,
+    HERBIVORE_SIZE*3,
     {
       isStatic: true,
       render: {
@@ -267,7 +268,7 @@ while(tick * STEP_SIZE < 600 ) {
 
     const herbivorePosition = herbivore.body.position;
     const targetPosition = herbivore.target.body.position
-    const resultVector = Vector.mult(Vector.normalise(Vector.sub(targetPosition, herbivorePosition)),1/(1+Math.sqrt(Math.sqrt(colorDistance))));
+    const resultVector = Vector.mult(Vector.normalise(Vector.sub(targetPosition, herbivorePosition)),1/(1+Math.sqrt(colorDistance)));
     Body.setVelocity(herbivore.body, resultVector);
 
     if (Query.collides(herbivore.body, [herbivore.target.body]).length > 0){
