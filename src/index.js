@@ -5,7 +5,7 @@ import hexRgb from 'hex-rgb';
 import rgbHex from 'rgb-hex';
 
 const HERBIVORE_COLOR = '#999999';
-const WORLD_SIZE = {x: 600, y: 600};
+const WORLD_SIZE = {x: window.innerWidth-20, y: window.innerHeight-20};
 const STEP_SIZE = 1/100;
 const HERBIVORE_SIZE = 10;
 const HERBIVORE_VARIANCE = 25;
@@ -55,8 +55,8 @@ const createRender = (engine) => Render.create({
   element: document.body,
   engine: engine,
   options: {
-    height: WORLD_SIZE.x,
-    width: WORLD_SIZE.y,
+    height: WORLD_SIZE.y,
+    width: WORLD_SIZE.x,
     enabled: true,
     wireframes: false,
   }
@@ -225,6 +225,8 @@ const mutateFood = (food) => {
       },
     },
   );
+
+  Body.rotate(body, Math.randomArbitrary(0,359));
   
   return {
     id: body.id,
