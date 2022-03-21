@@ -14,7 +14,6 @@ const DEATH_THRESHOLD = 12;
 const INITIAL_POPULATION = 60;
 const INITIAL_FOOD = 2;
 const FOOD_AMOUNT = 20;
-const FOOD_SIZE = HERBIVORE_SIZE*2;
 const CATEGORIES = {
   default: 0x0001,
   herbivores: 0x0002,
@@ -179,7 +178,7 @@ const createFood = ({color, position} = {}) => {
     initialPosition.x,
     initialPosition.y,
     3,
-    FOOD_SIZE,
+    FOOD_AMOUNT,
     {
       isStatic: true,
       render: {
@@ -218,7 +217,7 @@ const mutateFood = (food) => {
     position.x,
     position.y,
     3,
-    FOOD_SIZE,
+    FOOD_AMOUNT,
     {
       isStatic: true,
       render: {
@@ -284,6 +283,8 @@ while(tick * STEP_SIZE < 600 ) {
       herbivore.hungry = 0;
       herbivore.feeded++;
       herbivore.target.amount--;
+      const scale = herbivore.target.amount/(herbivore.target.amount + 1);
+      Body.scale(herbivore.target.body,scale,scale);
       if(herbivore.target.amount <= 0) {
         const newFood = mutateFood(herbivore.target);
         Composite.remove(engine.world, herbivore.target.body);
