@@ -1,3 +1,4 @@
+const HtmlWebpackPlugin = require('html-webpack-plugin');
 const path = require('path');
 
 module.exports = {
@@ -5,7 +6,7 @@ module.exports = {
   mode: 'development',
   devtool: 'inline-source-map',
   output: {
-    filename: 'main.js',
+    filename: '[name].[contenthash].js',
     path: path.resolve(__dirname, 'dist'),
     clean: true,
   },
@@ -15,4 +16,8 @@ module.exports = {
   experiments: {
     topLevelAwait: true,
   },
+  optimization: {
+    runtimeChunk: 'single',
+  },
+  plugins: [new HtmlWebpackPlugin()],
 };
