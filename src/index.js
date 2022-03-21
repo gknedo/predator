@@ -1,20 +1,25 @@
-import { clamp, times } from 'lodash';
+import { clamp, times, shuffle, result } from 'lodash';
 import { Engine, Render, Body, Bodies, Composite, Vector, Query } from 'matter-js';
 import { randomColor} from 'randomcolor';
 import hexRgb from 'hex-rgb';
 import rgbHex from 'rgb-hex';
 
-const HERBIVORE_COLOR = '#ffffff';
+const HERBIVORE_COLOR = '#999999';
 const WORLD_SIZE = {x: 600, y: 600};
 const STEP_SIZE = 1/100;
 const HERBIVORE_SIZE = 10;
-const HERBIVORE_VARIANCE = 30;
-const HUNGRY_THRESHOLD = 0.5;
-const DEATH_THRESHOLD = 5;
+const HERBIVORE_VARIANCE = 25;
+const HUNGRY_THRESHOLD = 0.4;
+const DEATH_THRESHOLD = 12;
 const INITIAL_POPULATION = 60;
-const INITIAL_FOOD = 3;
-const FOOD_AMOUNT = 30;
-let availableColors = ['#dd1111', '#11dd11', '#1111dd'];
+const INITIAL_FOOD = 2;
+const FOOD_AMOUNT = 20;
+const FOOD_SIZE = HERBIVORE_SIZE*2;
+const CATEGORIES = {
+  default: 0x0001,
+  herbivores: 0x0002,
+};
+let availableColors = _.shuffle(['#dd1111', '#11dd11', '#1111dd']);
 
 Math.randomArbitrary = function(min, max) {
   return Math.random() * (max - min) + min;
@@ -75,6 +80,10 @@ const createHerbivore = ({color, position} = {}) => {
     initialPosition.y,
     HERBIVORE_SIZE / 2,
     {
+      collisionFilter: {
+        category: CATEGORIES.herbivores,
+        mask: CATEGORIES.default,
+    },
       render: {
         fillStyle: initialColor,
       },
@@ -93,8 +102,8 @@ const createHerbivore = ({color, position} = {}) => {
 
 const mutateHerbivore = (herbivore) => {
   const positionDelta = {
-    x:  Math.randomArbitrary(-HERBIVORE_SIZE*5,HERBIVORE_SIZE*5),
-    y:  Math.randomArbitrary(-HERBIVORE_SIZE*5,HERBIVORE_SIZE*5),
+    x:  Math.randomArbitrary(-HERBIVORE_SIZE*2,HERBIVORE_SIZE*2),
+    y:  Math.randomArbitrary(-HERBIVORE_SIZE*2,HERBIVORE_SIZE*2),
   }
   const position = Vector.add(herbivore.body.position, positionDelta);
   position.x = clamp(position.x, HERBIVORE_SIZE, WORLD_SIZE.x - HERBIVORE_SIZE);
@@ -113,6 +122,10 @@ const mutateHerbivore = (herbivore) => {
     position.y,
     HERBIVORE_SIZE / 2,
     {
+      collisionFilter: {
+        category: CATEGORIES.herbivores,
+        mask: CATEGORIES.default,
+      },  
       render: {
         fillStyle: initialColor,
       },
@@ -146,7 +159,7 @@ const findNearestFood = (herbivore, foods) => {
 
   foods.forEach((food) => {
     const worldDistance = getDistance(herbivorePosition, Object.values(food.body.position));
-    const colorDistance = Math.sqrt(getDistance(herbivoreColor, hexRgb(food.body.render.fillStyle, {format: 'array'})));
+    const colorDistance = getDistance(herbivoreColor, hexRgb(food.body.render.fillStyle, {format: 'array'}));
     const foodDistance = worldDistance * colorDistance;
     if(foodDistance < nearestFoodDistance) {
       nearestFood = food;
@@ -166,7 +179,7 @@ const createFood = ({color, position} = {}) => {
     initialPosition.x,
     initialPosition.y,
     3,
-    HERBIVORE_SIZE*3,
+    FOOD_SIZE,
     {
       isStatic: true,
       render: {
@@ -175,8 +188,6 @@ const createFood = ({color, position} = {}) => {
     },
   );
   
-
-  console.log(initialColor);
   return {
     id: body.id,
     color: initialColor,
@@ -187,8 +198,8 @@ const createFood = ({color, position} = {}) => {
 
 const mutateFood = (food) => {
   const positionDelta = {
-    x:  Math.randomArbitrary(-120,120),
-    y:  Math.randomArbitrary(-120,120),
+    x:  Math.randomArbitrary(-90,90),
+    y:  Math.randomArbitrary(-90,90),
   }
   const position = Vector.add(food.body.position, positionDelta);
   position.x = clamp(position.x, HERBIVORE_SIZE, WORLD_SIZE.x - HERBIVORE_SIZE);
@@ -200,16 +211,14 @@ const mutateFood = (food) => {
     Math.round(clamp(color[1] + Math.randomArbitrary(-0, 0), 0, 255)),
     Math.round(clamp(color[2] + Math.randomArbitrary(-0, 0), 0, 255)),
   ];
-  console.log(c);
-  const initialColor = `#${rgbHex(c[0], c[1], c[2])}`;
 
-  console.log(initialColor);
+  const initialColor = `#${rgbHex(c[0], c[1], c[2])}`;
 
   const body = Bodies.polygon(
     position.x,
     position.y,
     3,
-    HERBIVORE_SIZE*3,
+    FOOD_SIZE,
     {
       isStatic: true,
       render: {
@@ -268,7 +277,7 @@ while(tick * STEP_SIZE < 600 ) {
 
     const herbivorePosition = herbivore.body.position;
     const targetPosition = herbivore.target.body.position
-    const resultVector = Vector.mult(Vector.normalise(Vector.sub(targetPosition, herbivorePosition)),1/(1+Math.sqrt(colorDistance)));
+    const resultVector = Vector.mult(Vector.normalise(Vector.sub(targetPosition, herbivorePosition)),1/(1+(colorDistance/100)));
     Body.setVelocity(herbivore.body, resultVector);
 
     if (Query.collides(herbivore.body, [herbivore.target.body]).length > 0){
