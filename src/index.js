@@ -11,14 +11,14 @@ const HERBIVORE_SIZE = 10;
 const HERBIVORE_VARIANCE = 25;
 const HUNGRY_THRESHOLD = 0.4;
 const DEATH_THRESHOLD = 12;
-const INITIAL_POPULATION = 60;
-const INITIAL_FOOD = 2;
+const INITIAL_POPULATION = WORLD_SIZE.x * WORLD_SIZE.y / 5000;
+const INITIAL_FOOD = clamp(WORLD_SIZE.x/300, 2, 6);
 const FOOD_AMOUNT = 20;
 const CATEGORIES = {
   default: 0x0001,
   herbivores: 0x0002,
 };
-let availableColors = _.shuffle(['#dd1111', '#11dd11', '#1111dd']);
+let availableColors = _.shuffle(['#dd1111', '#11dd11', '#1111dd', '#ffffff', '#222222', '#dddd11', '#11dddd', '#dd11dd']);
 
 Math.randomArbitrary = function(min, max) {
   return Math.random() * (max - min) + min;
@@ -94,7 +94,7 @@ const createHerbivore = ({color, position} = {}) => {
     color: initialColor,
     body: body,
     target: null,
-    hungry: 0,
+    hungry: Math.randomArbitrary(0,DEATH_THRESHOLD/STEP_SIZE),
     feeded: 1,
   };
 }
@@ -266,7 +266,7 @@ while(tick * STEP_SIZE < 600 ) {
     herbivore.hungry++;
 
     if(herbivore.hungry * STEP_SIZE < HUNGRY_THRESHOLD) return herbivore;
-    if(herbivore.hungry * STEP_SIZE > DEATH_THRESHOLD) {
+    if(herbivore.hungry * STEP_SIZE > DEATH_THRESHOLD/STEP_SIZE) {
       Composite.remove(engine.world, herbivore.body);
       return null;
     }
